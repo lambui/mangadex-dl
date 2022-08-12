@@ -376,6 +376,7 @@ if __name__ == "__main__":
                     else:
                         appendline(input_file, f'{url}|{fail_count+1}{str(e)}')
                 else:
+                    print(err_message)
                     appendline('./fail_report.txt', url)
     else:
         urlInput = "";
