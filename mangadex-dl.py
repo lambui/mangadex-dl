@@ -269,7 +269,7 @@ def dl(manga_id, lang_code, zip_up, ds, outdir, chapter_input=None):
                     errored = True
                     print("\n Skipping download of page {} - error {}.".format(
                         pagenum, r.status_code))
-                    raise Exception(chapter["attributes"]["chapter"] if chapter["attributes"]["chapter"] is not None else "oneshot")
+                    raise Exception("FAIL-{}".format(chapter["attributes"]["chapter"] if chapter["attributes"]["chapter"] is not None else "oneshot"))
             time.sleep(0.2) # within limit of 5 requests per second
             # not reporting https://api.mangadex.network/report telemetry for now, sorry
 
@@ -366,12 +366,17 @@ if __name__ == "__main__":
                 dlWrapper(url, lang_code, args.cbz, args.datasaver, args.outdir, chapter_input)
             except Exception as e:
                 print("Error!")
-                # try again, begin at failed chapter
-                time.sleep(5)
-                if float(str(e)): 
-                    appendline(input_file, f'{url}|{fail_count+1}|{e}-end')
+                err_message = str(e)
+                if (err_message.startswith("FAIL-")):
+                    chapter_num = err_message.split("-")[-1]
+                    # try again, begin at failed chapter
+                    time.sleep(5)
+                    if chapter_num != 'oneshot':
+                        appendline(input_file, f'{url}|{fail_count+1}|{chapter_num}-end')
+                    else:
+                        appendline(input_file, f'{url}|{fail_count+1}{str(e)}')
                 else:
-                    appendline(input_file, f'{url}|{fail_count+1}{str(e)}')
+                    appendline('./fail_report.txt', url)
     else:
         urlInput = "";
         # prompt for manga
