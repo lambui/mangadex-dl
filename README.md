@@ -3,15 +3,17 @@
 A Python script to download manga from [MangaDex.org](https://mangadex.org/).
 
 ## Requirements
-  * [Python 3.4+](https://www.python.org/downloads/) (or [install via Homebrew](https://docs.python-guide.org/starting/install3/osx/) on macOS)
-  * Python's [Requests](https://docs.python-requests.org/en/latest/) library
+
+* [Python 3.4+](https://www.python.org/downloads/) (or [install via Homebrew](https://docs.python-guide.org/starting/install3/osx/) on macOS)
+* Python's [Requests](https://docs.python-requests.org/en/latest/) library
 
 ## Installation & usage
-```
-$ git clone https://github.com/frozenpandaman/mangadex-dl
-$ pip install requests
-$ cd mangadex-dl/
-$ python mangadex-dl.py [-l language_code] [-d] [-a] [-o dl_dir]
+
+```cmd
+git clone https://github.com/frozenpandaman/mangadex-dl
+pip install requests
+cd mangadex-dl/
+python mangadex-dl.py [-l language_code] [-d] [-a] [-o dl_dir]
 ```
 
 You can also execute the script via `./mangadex-dl.py` on macOS and Linux. On Windows, use a backslash.
@@ -23,20 +25,21 @@ You can also execute the script via `./mangadex-dl.py` on macOS and Linux. On Wi
 * `-a`: Package downloaded chapters into .cbz ([comic book archive](https://en.wikipedia.org/wiki/Comic_book_archive)) files.
 * `-o`: Use a custom output directory name to save downloaded chapters. Defaults to "download".
 * `-f`: Read from specified input file. If no file path is supplied, default to `input.txt` file within the same location
-    * `./mangadex-dl.py -f` will read from file `./input.txt`
-    * `./mangadex-dl.py -f /abc` will read from file `/abc`
-    * content of input file will be manga URLs like so (each line is a URL):
-        ```
-        https://mangadex.org/title/da229b4e-7722-40e2-8c0b-4def041fe884/tegami-bachi
-        https://mangadex.org/title/bda551f4-1a41-42cb-9260-3bbdbe47ae72/naka-no-warui-iinazuke-no-hanashi
-        https://mangadex.org/title/1c4a749c-9d97-418c-838b-2cccaa7da828/yae-no-sakura
-        https://mangadex.org/title/178bd1bc-51cf-4d6f-96ac-63515df21ac1/hawkwood
-        https://mangadex.org/title/c4c04636-3774-4f39-8424-e1aef59ac6ff/the-mermaid-princess-s-guilty-meal
-        ```
+  * `./mangadex-dl.py -f` will read from file `./input.txt`
+  * `./mangadex-dl.py -f /abc` will read from file `/abc`
+  * content of input file will be manga URLs like so (each line is a URL):
 
+    ```txt
+    https://mangadex.org/title/da229b4e-7722-40e2-8c0b-4def041fe884/tegami-bachi
+    https://mangadex.org/title/bda551f4-1a41-42cb-9260-3bbdbe47ae72/naka-no-warui-iinazuke-no-hanashi
+    https://mangadex.org/title/1c4a749c-9d97-418c-838b-2cccaa7da828/yae-no-sakura
+    https://mangadex.org/title/178bd1bc-51cf-4d6f-96ac-63515df21ac1/hawkwood
+    https://mangadex.org/title/c4c04636-3774-4f39-8424-e1aef59ac6ff/the-mermaid-princess-s-guilty-meal
+    ```
 
 ### Example usage
-```
+
+```cmd
 $ ./mangadex-dl.py
 mangadex-dl v0.6
 Enter manga URL: https://mangadex.org/title/58be6aa6-06cb-4ca5-bd20-f1392ce451fb/yotsuba-to
@@ -61,10 +64,11 @@ Downloading chapter 1...
 * You can specify chapter number (ex: 1, 2, 3...) or range of chapters (ex: 1-5, 10-45, ...) or leave it blank to download everything
 
 ### Current limitations
- * The script will download all available releases (in your language) of each chapter specified.
- * If you use input file (`-f`):
-    * You hasve to manually create input file.
-    * It will download every chapters of every specified mangas.
+
+* The script will download all available releases (in your language) of each chapter specified.
+* If you use input file (`-f`):
+  * You hasve to manually create input file.
+  * It will download every chapters of every specified mangas.
 
 ## License
 
