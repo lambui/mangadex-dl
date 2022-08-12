@@ -307,15 +307,24 @@ if __name__ == "__main__":
     parser.add_argument("-o", dest="outdir", required=False,
             action="store", default="download",
             help="specify name of output directory")
+    parser.add_argument("-f", dest="file", nargs='?', required=False,
+            help="specify path of input file")
     args = parser.parse_args()
 
     lang_code = "en" if args.lang is None else str(args.lang)
 
-    # prompt for manga
-    url = ""
-    while url == "":
-        url = input("Enter manga URL or ID: ").strip()
-    urls = [item.strip() for item in url.split(',')]
+    urlInput = "";
+    if '-f' in sys.argv:
+        input_file = "./input.txt" if args.file is None else str(args.file)
+        f = open(input_file, 'r')
+        urlInput = f.read().split('\n');
+        urls = [item.strip() for item in f.read().split('\n')]
+    else:
+        # prompt for manga
+        while urlInput == "":
+            urlInput = input("Enter manga URL or ID: ").strip()
+        urlInput = urlInput.split(',')
+    urls = [item.strip() for item in urlInput]
 
     for item in urls:
         try:
