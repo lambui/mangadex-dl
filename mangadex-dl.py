@@ -318,7 +318,6 @@ if __name__ == "__main__":
         input_file = "./input.txt" if args.file is None else str(args.file)
         f = open(input_file, 'r')
         urlInput = f.read().split('\n');
-        urls = [item.strip() for item in f.read().split('\n')]
     else:
         # prompt for manga
         while urlInput == "":
