@@ -93,7 +93,7 @@ def uniquify(title, chapnum, groupname, basedir):
 		counter += 1
 	return dest_folder
 
-def dl(manga_id, lang_code, zip_up, ds, outdir):
+def dl(manga_id, lang_code, zip_up, ds, outdir, auto):
 	uuid = manga_id
 
 	if manga_id.isnumeric():
@@ -141,48 +141,54 @@ def dl(manga_id, lang_code, zip_up, ds, outdir):
 
 	# i/o for chapters to download
 	requested_chapters = []
-	dl_list = input("\nEnter chapter(s) to download: ").strip()
+	if auto:
+		requested_chapters.extend(chap_list)
+	else:
+		dl_list = input("\nEnter chapter(s) to download: ").strip()
 
-	dl_list = [s.strip() for s in dl_list.split(',')]
-	chap_list_only_nums = [i["attributes"]["chapter"] for i in chap_list]
-	for s in dl_list:
-		if "-" in s: # range
-			split = s.split('-')
-			lower_bound = split[0]
-			upper_bound = split[-1]
-			try:
-				lower_bound_i = chap_list_only_nums.index(lower_bound)
-			except ValueError:
-				print("Chapter {} does not exist. Skipping range {}."
+		dl_list = [s.strip() for s in dl_list.split(',')]
+		chap_list_only_nums = [i["attributes"]["chapter"] for i in chap_list]
+		for s in dl_list:
+			if "-" in s: # range
+				split = s.split('-')
+				lower_bound = split[0]
+				upper_bound = split[-1]
+				try:
+					lower_bound_i = chap_list_only_nums.index(lower_bound)
+				except ValueError:
+					print("Chapter {} does not exist. Skipping range {}."
 						.format(lower_bound, s))
-				continue # go to next iteration of loop
-			try:
-				upper_bound_i = chap_list_only_nums.index(upper_bound)
-			except ValueError:
-				print("Chapter {} does not exist. Skipping range {}."
+					continue # go to next iteration of loop
+				try:
+					upper_bound_i = chap_list_only_nums.index(upper_bound)
+				except ValueError:
+					print("Chapter {} does not exist. Skipping range {}."
 						.format(upper_bound, s))
-				continue
-			s = chap_list[lower_bound_i:upper_bound_i+1]
-		elif s.lower() == "oneshot":
-			if None in chap_list_only_nums:
-				oneshot_idxs = [i
-						for i, x in enumerate(chap_list_only_nums)
-						if x is None]
+					continue
+				s = chap_list[lower_bound_i:upper_bound_i+1]
+			elif s.lower() == "oneshot":
+				if None in chap_list_only_nums:
+					oneshot_idxs = [i
+							for i, x in enumerate(chap_list_only_nums)
+							if x is None]
+					s = []
+					for idx in oneshot_idxs:
+						s.append(chap_list[idx])
+				else:
+					print("Chapter Oneshot does not exist. Skipping.")
+					continue
+			elif s.lower() == "":
+				requested_chapters.extend(chap_list)
+				break
+			else: # single number (but might be multiple chapters numbered this)
+				chap_idxs = [i for i, x in enumerate(chap_list_only_nums) if x == s]
+				if len(chap_idxs) == 0:
+					print("Chapter {} does not exist. Skipping.".format(s))
+					continue
 				s = []
-				for idx in oneshot_idxs:
+				for idx in chap_idxs:
 					s.append(chap_list[idx])
-			else:
-				print("Chapter Oneshot does not exist. Skipping.")
-				continue
-		else: # single number (but might be multiple chapters numbered this)
-			chap_idxs = [i for i, x in enumerate(chap_list_only_nums) if x == s]
-			if len(chap_idxs) == 0:
-				print("Chapter {} does not exist. Skipping.".format(s))
-				continue
-			s = []
-			for idx in chap_idxs:
-				s.append(chap_list[idx])
-		requested_chapters.extend(s)
+			requested_chapters.extend(s)
 
 	# get chapter json(s)
 	print()
@@ -285,7 +291,6 @@ def dl(manga_id, lang_code, zip_up, ds, outdir):
 				print("\r\033[K", end='', flush=True)
 	print("Done.")
 
-
 if __name__ == "__main__":
 	print("mangadex-dl v{}".format(A_VERSION))
 
@@ -310,12 +315,13 @@ if __name__ == "__main__":
 	url = ""
 	while url == "":
 		url = input("Enter manga URL or ID: ").strip()
+	urls = [item.strip() for item in url.split(',')]
 
-	try:
-		url_parts = url.split('/')
-		manga_id = find_id_in_url(url_parts)
-	except:
-		print("Error with URL.")
-		exit(1)
-
-	dl(manga_id, lang_code, args.cbz, args.datasaver, args.outdir)
+	for item in urls:
+		try:
+			url_parts = item.split('/')
+			manga_id = find_id_in_url(url_parts)
+			dl(manga_id, lang_code, args.cbz, args.datasaver, args.outdir, len(urls) > 1)
+		except:
+			print("Error with URL. Skipping.")
+			continue
