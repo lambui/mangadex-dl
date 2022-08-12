@@ -93,7 +93,7 @@ def uniquify(title, chapnum, groupname, basedir):
         counter += 1
     return dest_folder
 
-def dl(manga_id, lang_code, zip_up, ds, outdir, auto):
+def dl(manga_id, lang_code, zip_up, ds, outdir, chapter_input=None):
     uuid = manga_id
 
     if manga_id.isnumeric():
@@ -141,54 +141,54 @@ def dl(manga_id, lang_code, zip_up, ds, outdir, auto):
 
     # i/o for chapters to download
     requested_chapters = []
-    if auto:
-        requested_chapters.extend(chap_list)
-    else:
+    dl_list = chapter_input
+    if dl_list is None:
         dl_list = input("\nEnter chapter(s) to download: ").strip()
-
-        dl_list = [s.strip() for s in dl_list.split(',')]
-        chap_list_only_nums = [i["attributes"]["chapter"] for i in chap_list]
-        for s in dl_list:
-            if "-" in s: # range
-                split = s.split('-')
-                lower_bound = split[0]
-                upper_bound = split[-1]
-                try:
-                    lower_bound_i = chap_list_only_nums.index(lower_bound)
-                except ValueError:
-                    print("Chapter {} does not exist. Skipping range {}."
-                        .format(lower_bound, s))
-                    continue # go to next iteration of loop
+    dl_list = [s.strip() for s in dl_list.split(',')]
+    chap_list_only_nums = [i["attributes"]["chapter"] for i in chap_list]
+    for s in dl_list:
+        if "-" in s: # range
+            split = s.split('-')
+            lower_bound = split[0]
+            upper_bound = split[-1]
+            try:
+                lower_bound_i = chap_list_only_nums.index(lower_bound)
+            except ValueError:
+                print("Chapter {} does not exist. Skipping range {}."
+                    .format(lower_bound, s))
+                continue # go to next iteration of loop
+            upper_bound_i = len(chap_list) - 1
+            if upper_bound != 'end':
                 try:
                     upper_bound_i = chap_list_only_nums.index(upper_bound)
                 except ValueError:
                     print("Chapter {} does not exist. Skipping range {}."
                         .format(upper_bound, s))
                     continue
-                s = chap_list[lower_bound_i:upper_bound_i+1]
-            elif s.lower() == "oneshot":
-                if None in chap_list_only_nums:
-                    oneshot_idxs = [i
-                            for i, x in enumerate(chap_list_only_nums)
-                            if x is None]
-                    s = []
-                    for idx in oneshot_idxs:
-                        s.append(chap_list[idx])
-                else:
-                    print("Chapter Oneshot does not exist. Skipping.")
-                    continue
-            elif s.lower() == "":
-                requested_chapters.extend(chap_list)
-                break
-            else: # single number (but might be multiple chapters numbered this)
-                chap_idxs = [i for i, x in enumerate(chap_list_only_nums) if x == s]
-                if len(chap_idxs) == 0:
-                    print("Chapter {} does not exist. Skipping.".format(s))
-                    continue
+            s = chap_list[lower_bound_i:upper_bound_i+1]
+        elif s.lower() == "oneshot":
+            if None in chap_list_only_nums:
+                oneshot_idxs = [i
+                        for i, x in enumerate(chap_list_only_nums)
+                        if x is None]
                 s = []
-                for idx in chap_idxs:
+                for idx in oneshot_idxs:
                     s.append(chap_list[idx])
-            requested_chapters.extend(s)
+            else:
+                print("Chapter Oneshot does not exist. Skipping.")
+                continue
+        elif s.lower() == "":
+            requested_chapters.extend(chap_list)
+            break
+        else: # single number (but might be multiple chapters numbered this)
+            chap_idxs = [i for i, x in enumerate(chap_list_only_nums) if x == s]
+            if len(chap_idxs) == 0:
+                print("Chapter {} does not exist. Skipping.".format(s))
+                continue
+            s = []
+            for idx in chap_idxs:
+                s.append(chap_list[idx])
+        requested_chapters.extend(s)
 
     # get chapter json(s)
     print()
@@ -269,6 +269,7 @@ def dl(manga_id, lang_code, zip_up, ds, outdir, auto):
                     errored = True
                     print("\n Skipping download of page {} - error {}.".format(
                         pagenum, r.status_code))
+                    raise Exception(chapter["attributes"]["chapter"] if chapter["attributes"]["chapter"] is not None else "oneshot")
             time.sleep(0.2) # within limit of 5 requests per second
             # not reporting https://api.mangadex.network/report telemetry for now, sorry
 
@@ -290,6 +291,31 @@ def dl(manga_id, lang_code, zip_up, ds, outdir, auto):
             else:
                 print("\r\033[K", end='', flush=True)
     print("Done.")
+
+def dlWrapper(url_input, lang, cbz, datasaver, outdir, chapter_input=None):
+    url_parts = url_input.split('/')
+    manga_id = find_id_in_url(url_parts)
+    print(manga_id)
+    dl(manga_id, lang, cbz, datasaver, outdir, chapter_input)
+
+def popline(filepath):
+    with open(filepath, "r+") as f:
+        line = f.readline().strip()
+        data = f.read()
+        f.seek(0)
+        f.write(data)
+        f.truncate()
+        return line
+
+def appendline(filepath, line):
+    with open(filepath, "a") as f:
+        f.write(f'\n{line}')
+
+def EOF(filepath):
+    with open(filepath, "r") as f:
+        current_pos = f.tell()
+        file_size = os.fstat(f.fileno()).st_size
+        return current_pos >= file_size
 
 if __name__ == "__main__":
     print("mangadex-dl v{}".format(A_VERSION))
@@ -313,23 +339,38 @@ if __name__ == "__main__":
 
     lang_code = "en" if args.lang is None else str(args.lang)
 
-    urlInput = "";
     if '-f' in sys.argv:
         input_file = "./input.txt" if args.file is None else str(args.file)
-        f = open(input_file, 'r')
-        urlInput = f.read().split('\n');
+        if not os.path.exists(input_file):
+            with open(input_file, "w+"): pass
+        while not EOF(input_file):
+            line = popline(input_file)
+            if line == "": continue
+            try:
+                fragments = line.split("|")
+                url = fragments[0]
+                chapter_input = ''
+                if len(fragments) > 1:
+                    chapter_input = fragments[-1]
+                dlWrapper(url, lang_code, args.cbz, args.datasaver, args.outdir, chapter_input)
+            except Exception as e:
+                print("Error!")
+                # try again, begin at failed chapter
+                time.sleep(2)
+                if float(str(e)): 
+                    appendline(input_file, f'{url}|{e}-end')
+                else:
+                    appendline(input_file, f'{url}|{str(e)}')
     else:
+        urlInput = "";
         # prompt for manga
         while urlInput == "":
             urlInput = input("Enter manga URL or ID: ").strip()
         urlInput = urlInput.split(',')
-    urls = [item.strip() for item in urlInput]
-
-    for item in urls:
-        try:
-            url_parts = item.split('/')
-            manga_id = find_id_in_url(url_parts)
-            dl(manga_id, lang_code, args.cbz, args.datasaver, args.outdir, len(urls) > 1)
-        except:
-            print("Error with URL. Skipping.")
-            continue
+        urls = [item.strip() for item in urlInput]
+        for item in urls:
+            try:
+                dlWrapper(item, lang_code, args.cbz, args.datasaver, args.outdir, '' if len(urls) > 1 else None)
+            except:
+                print("Error with URL. Skipping.")
+                continue

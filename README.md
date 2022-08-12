@@ -37,6 +37,11 @@ You can also execute the script via `./mangadex-dl.py` on macOS and Linux. On Wi
     https://mangadex.org/title/c4c04636-3774-4f39-8424-e1aef59ac6ff/the-mermaid-princess-s-guilty-meal
     ```
 
+  * you can specify what chapters to download for each manga after `|` character. For ex:
+    * `https://mangadex.org/title/da229b4e-7722-40e2-8c0b-4def041fe884/tegami-bachi` by default will download all available chapters
+    * `https://mangadex.org/title/da229b4e-7722-40e2-8c0b-4def041fe884/tegami-bachi|1-end` will download all chapters from 1 to last chapter
+    * `https://mangadex.org/title/da229b4e-7722-40e2-8c0b-4def041fe884/tegami-bachi|20-21` will download chapter 20 and 21
+
 ### Example usage
 
 ```cmd
@@ -61,14 +66,16 @@ Downloading chapter 1...
 ... (and so on)
 ```
 
-* You can specify chapter number (ex: 1, 2, 3...) or range of chapters (ex: 1-5, 10-45, ...) or leave it blank to download everything
+* You can specify chapter to download by:
+  * number (ex: `1`, `2`, `3`...)
+  * range of chapters:
+    * `1-5`: download from chapter 1 to chapter 5
+    * `3-end`: download from chapter 3 to last chapter
+  * leave it blank to download every chapters
 
 ### Current limitations
 
 * The script will download all available releases (in your language) of each chapter specified.
-* If you use input file (`-f`):
-  * You hasve to manually create input file.
-  * It will download every chapters of every specified mangas.
 
 ## License
 
