@@ -346,21 +346,32 @@ if __name__ == "__main__":
         while not EOF(input_file):
             line = popline(input_file)
             if line == "": continue
+            fragments = line.split("|")
+            url = fragments[0]
+            chapter_input = ''
+            fragments_len = len(fragments)
+            fail_count = 0
+            if fragments_len > 1:
+                chapter_input = fragments[-1]
+                try:
+                    fail_count = int(fragments[-2])
+                except:
+                    fail_count = 0
+            if fail_count == 10:
+                if not os.path.exists('./fail_report.txt'): # create file if not exist
+                    with open('./fail_report.txt', "w+"): pass
+                appendline('./fail_report.txt', url)
+                continue
             try:
-                fragments = line.split("|")
-                url = fragments[0]
-                chapter_input = ''
-                if len(fragments) > 1:
-                    chapter_input = fragments[-1]
                 dlWrapper(url, lang_code, args.cbz, args.datasaver, args.outdir, chapter_input)
             except Exception as e:
                 print("Error!")
                 # try again, begin at failed chapter
-                time.sleep(2)
+                time.sleep(5)
                 if float(str(e)): 
-                    appendline(input_file, f'{url}|{e}-end')
+                    appendline(input_file, f'{url}|{fail_count+1}|{e}-end')
                 else:
-                    appendline(input_file, f'{url}|{str(e)}')
+                    appendline(input_file, f'{url}|{fail_count+1}{str(e)}')
     else:
         urlInput = "";
         # prompt for manga

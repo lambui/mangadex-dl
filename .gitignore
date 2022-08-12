@@ -1,3 +1,4 @@
 download/
 *.pyc
 input.txt
+fail_report.txt
